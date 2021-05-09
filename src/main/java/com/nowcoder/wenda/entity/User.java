@@ -2,6 +2,9 @@ package com.nowcoder.wenda.entity;
 
 import java.util.Date;
 
+/**
+ * @author hc
+ */
 public class User {
 
     private int id;

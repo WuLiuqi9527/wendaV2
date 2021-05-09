@@ -1,6 +1,8 @@
 package com.nowcoder.wenda;
 
+import com.nowcoder.wenda.dao.DiscussPostMapper;
 import com.nowcoder.wenda.dao.UserMapper;
+import com.nowcoder.wenda.entity.DiscussPost;
 import com.nowcoder.wenda.entity.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
 import java.util.Date;
+import java.util.List;
 
 @SpringBootTest
 @ContextConfiguration(classes = WendaApplication.class)
@@ -15,6 +18,9 @@ public class MapperTests {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private DiscussPostMapper discussPostMapper;
 
     @Test
     public void testSelectUser() {
@@ -53,6 +59,16 @@ public class MapperTests {
 
         rows = userMapper.updatePassword(150, "hello");
         System.out.println(rows);
+    }
+
+    @Test
+    public void selectDiscuss() {
+        List<DiscussPost> discussPosts = discussPostMapper.selectDiscussPosts(0, 0, 10);
+        for (DiscussPost d : discussPosts) {
+            System.out.println(d);
+        }
+
+        System.out.println(discussPostMapper.selectDiscussPostRows(0));
     }
 
 }
