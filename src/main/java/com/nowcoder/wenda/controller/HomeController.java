@@ -2,7 +2,6 @@ package com.nowcoder.wenda.controller;
 
 import com.nowcoder.wenda.entity.DiscussPost;
 import com.nowcoder.wenda.entity.Page;
-import com.nowcoder.wenda.entity.User;
 import com.nowcoder.wenda.service.DiscussPostService;
 import com.nowcoder.wenda.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;

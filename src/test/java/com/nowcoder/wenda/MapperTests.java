@@ -74,4 +74,9 @@ public class MapperTests {
         System.out.println(discussPostMapper.selectDiscussPostRows(0));
     }
 
+    @Test
+    public void deleteUser() {
+        userMapper.deleteUser(152);
+    }
+
 }
