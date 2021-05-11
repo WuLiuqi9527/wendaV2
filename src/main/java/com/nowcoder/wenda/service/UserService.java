@@ -1,10 +1,12 @@
 package com.nowcoder.wenda.service;
 
+import com.nowcoder.wenda.dao.LoginTicketMapper;
 import com.nowcoder.wenda.dao.UserMapper;
+import com.nowcoder.wenda.entity.LoginTicket;
 import com.nowcoder.wenda.entity.User;
-import com.nowcoder.wenda.util.MailClient;
-import com.nowcoder.wenda.util.WendaUtil;
 import com.nowcoder.wenda.util.WendaConstant;
+import com.nowcoder.wenda.util.WendaUtil;
+import com.nowcoder.wenda.util.MailClient;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +36,9 @@ public class UserService implements WendaConstant {
 
     @Value("${server.servlet.context-path}")
     private String contextPath;
+
+    @Autowired
+    private LoginTicketMapper loginTicketMapper;
 
     public User findUserById(int id) {
         return userMapper.selectById(id);
@@ -86,6 +91,7 @@ public class UserService implements WendaConstant {
         // 激活邮件
         Context context = new Context();
         context.setVariable("email", user.getEmail());
+        // http://localhost:8080/wenda/activation/153/1f1191d5505940bd888c97053408aee9
         // http://localhost:8080/wenda/activation/101/code
         String url = domain + contextPath + "/activation/" + user.getId() + "/" + user.getActivationCode();
         context.setVariable("url", url);
@@ -105,6 +111,59 @@ public class UserService implements WendaConstant {
         } else {
             return ACTIVATION_FAILURE;
         }
+    }
+
+    public Map<String, Object> login(String username, String password, int expiredSeconds) {
+        Map<String, Object> map = new HashMap<>();
+
+        // 空值处理
+        if (StringUtils.isBlank(username)) {
+            map.put("usernameMsg", "账号不能为空!");
+            return map;
+        }
+        if (StringUtils.isBlank(password)) {
+            map.put("passwordMsg", "密码不能为空!");
+            return map;
+        }
+
+        // 验证账号
+        User user = userMapper.selectByName(username);
+        if (user == null) {
+            map.put("usernameMsg", "该账号不存在!");
+            return map;
+        }
+
+        // 验证状态
+        if (user.getStatus() == 0) {
+            map.put("usernameMsg", "该账号未激活!");
+            return map;
+        }
+
+        // 验证密码
+        password = WendaUtil.md5(password + user.getSalt());
+        if (!user.getPassword().equals(password)) {
+            map.put("passwordMsg", "密码不正确!");
+            return map;
+        }
+
+        // 生成登录凭证
+        LoginTicket loginTicket = new LoginTicket();
+        loginTicket.setUserId(user.getId());
+        loginTicket.setTicket(WendaUtil.generateUUID());
+        loginTicket.setStatus(0);
+        loginTicket.setExpired(new Date(System.currentTimeMillis() + expiredSeconds * 1000));
+        loginTicketMapper.insertLoginTicket(loginTicket);
+
+        map.put("ticket", loginTicket.getTicket());
+        return map;
+    }
+
+    public void logout(String ticket) {
+        loginTicketMapper.updateStatus(ticket, 1);
+    }
+
+    public LoginTicket findLoginTicket(String ticket) {
+        return loginTicketMapper.selectByTicket(ticket);
     }
 
 }
