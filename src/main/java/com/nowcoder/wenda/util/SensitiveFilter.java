@@ -87,7 +87,7 @@ public class SensitiveFilter {
         while (position < text.length()) {
             char c = text.charAt(position);
 
-            // 跳过符号
+            // 跳过特殊符号
             if (isSymbol(c)) {
                 // 若指针1处于根节点,将此符号计入结果,让指针2向下走一步
                 if (tempNode == rootNode) {
@@ -147,7 +147,7 @@ public class SensitiveFilter {
         }
 
         public void setKeywordEnd(boolean keywordEnd) {
-            isKeywordEnd = keywordEnd;
+            this.isKeywordEnd = keywordEnd;
         }
 
         // 添加子节点
@@ -159,7 +159,5 @@ public class SensitiveFilter {
         public TrieNode getSubNode(Character c) {
             return subNodes.get(c);
         }
-
     }
-
 }
