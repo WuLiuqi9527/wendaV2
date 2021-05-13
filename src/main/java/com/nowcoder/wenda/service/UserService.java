@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class UserService implements WendaConstant {
@@ -41,10 +42,6 @@ public class UserService implements WendaConstant {
 
     @Autowired
     private RedisTemplate redisTemplate;
-
-    public User findUserById(int id) {
-        return userMapper.selectById(id);
-    }
 
     public Map<String, Object> register(User user) {
         Map<String, Object> map = new HashMap<>();
@@ -176,15 +173,48 @@ public class UserService implements WendaConstant {
     }
 
     public int updateHeader(int userId, String headerUrl) {
-        return userMapper.updateHeader(userId, headerUrl);
+        int rows = userMapper.updateHeader(userId, headerUrl);
+        clearCache(userId);
+        return rows;
     }
 
     public int updatePassword(int userId, String newPassword) {
-        return userMapper.updatePassword(userId, newPassword);
+        int rows = userMapper.updatePassword(userId, newPassword);
+        clearCache(userId);
+        return rows;
     }
 
     public User findUserByName(String username) {
         return userMapper.selectByName(username);
+    }
+
+    public User findUserById(int id) {
+        User user = getCache(id);
+        if (user == null) {
+            user = initCache(id);
+        }
+        return user;
+    }
+
+    /** Redis 优化用户缓存*/
+    // 1.优先从缓存中取值
+    private User getCache(int userId) {
+        String redisKey = RedisKeyUtil.getUserKey(userId);
+        return (User) redisTemplate.opsForValue().get(redisKey);
+    }
+
+    // 2.取不到时初始化缓存数据
+    private User initCache(int userId) {
+        User user = userMapper.selectById(userId);
+        String redisKey = RedisKeyUtil.getUserKey(userId);
+        redisTemplate.opsForValue().set(redisKey, user, 3600, TimeUnit.SECONDS);
+        return user;
+    }
+
+    // 3.数据变更时清除缓存数据
+    private void clearCache(int userId) {
+        String redisKey = RedisKeyUtil.getUserKey(userId);
+        redisTemplate.delete(redisKey);
     }
 
 }
