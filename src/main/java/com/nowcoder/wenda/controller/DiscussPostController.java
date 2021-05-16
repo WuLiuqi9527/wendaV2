@@ -1,9 +1,7 @@
 package com.nowcoder.wenda.controller;
 
-import com.nowcoder.wenda.entity.Comment;
-import com.nowcoder.wenda.entity.DiscussPost;
-import com.nowcoder.wenda.entity.Page;
-import com.nowcoder.wenda.entity.User;
+import com.nowcoder.wenda.entity.*;
+import com.nowcoder.wenda.event.EventProducer;
 import com.nowcoder.wenda.service.CommentService;
 import com.nowcoder.wenda.service.DiscussPostService;
 import com.nowcoder.wenda.service.LikeService;
@@ -40,6 +38,9 @@ public class DiscussPostController implements WendaConstant {
     @Autowired
     LikeService likeService;
 
+    @Autowired
+    EventProducer eventProducer;
+
     @RequestMapping(path = "/add", method = RequestMethod.POST)
     @ResponseBody
     public String addDiscussPost(String title, String content) {
@@ -54,6 +55,14 @@ public class DiscussPostController implements WendaConstant {
         post.setContent(content);
         post.setCreateTime(new Date());
         discussPostService.addDiscussPost(post);
+
+        // 触发发帖事件
+        Event event = new Event()
+                .setTopic(TOPIC_PUBLISH)
+                .setUserId(user.getId())
+                .setEntityType(ENTITY_TYPE_POST)
+                .setEntityId(post.getId());
+        eventProducer.fireEvent(event);
 
         // 报错的情况,将来统一处理.
         return WendaUtil.getJSONString(0, "发布成功!");
