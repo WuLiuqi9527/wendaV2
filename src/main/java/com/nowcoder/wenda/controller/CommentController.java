@@ -7,8 +7,10 @@ import com.nowcoder.wenda.event.EventProducer;
 import com.nowcoder.wenda.service.CommentService;
 import com.nowcoder.wenda.service.DiscussPostService;
 import com.nowcoder.wenda.util.HostHolder;
+import com.nowcoder.wenda.util.RedisKeyUtil;
 import com.nowcoder.wenda.util.WendaConstant;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,6 +33,9 @@ public class CommentController implements WendaConstant {
 
     @Autowired
     private DiscussPostService discussPostService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     @RequestMapping(path = "/add/{discussPostId}", method = RequestMethod.POST)
     public String addComment(@PathVariable("discussPostId") int discussPostId, Comment comment) {
@@ -64,6 +69,10 @@ public class CommentController implements WendaConstant {
                     .setEntityId(discussPostId);
             eventProducer.fireEvent(event);
         }
+
+        // 计算帖子分数
+        String redisKey = RedisKeyUtil.getPostScoreKey();
+        redisTemplate.opsForSet().add(redisKey, discussPostId);
 
         return "redirect:/discuss/detail/" + discussPostId;
     }

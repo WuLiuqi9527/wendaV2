@@ -6,10 +6,12 @@ import com.nowcoder.wenda.service.CommentService;
 import com.nowcoder.wenda.service.DiscussPostService;
 import com.nowcoder.wenda.service.LikeService;
 import com.nowcoder.wenda.service.UserService;
+import com.nowcoder.wenda.util.RedisKeyUtil;
 import com.nowcoder.wenda.util.WendaConstant;
 import com.nowcoder.wenda.util.WendaUtil;
 import com.nowcoder.wenda.util.HostHolder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,6 +43,9 @@ public class DiscussPostController implements WendaConstant {
     @Autowired
     EventProducer eventProducer;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
     @RequestMapping(path = "/add", method = RequestMethod.POST)
     @ResponseBody
     public String addDiscussPost(String title, String content) {
@@ -63,6 +68,10 @@ public class DiscussPostController implements WendaConstant {
                 .setEntityType(ENTITY_TYPE_POST)
                 .setEntityId(post.getId());
         eventProducer.fireEvent(event);
+
+        // 计算帖子分数
+        String redisKey = RedisKeyUtil.getPostScoreKey();
+        redisTemplate.opsForSet().add(redisKey, post.getId());
 
         // 报错的情况,将来统一处理.
         return WendaUtil.getJSONString(0, "发布成功!");
@@ -186,6 +195,10 @@ public class DiscussPostController implements WendaConstant {
                 .setEntityType(ENTITY_TYPE_POST)
                 .setEntityId(id);
         eventProducer.fireEvent(event);
+
+        // 计算帖子分数
+        String redisKey = RedisKeyUtil.getPostScoreKey();
+        redisTemplate.opsForSet().add(redisKey, id);
 
         return WendaUtil.getJSONString(0);
     }
