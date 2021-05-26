@@ -54,7 +54,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter implements Wend
                 )
                 .antMatchers(
                         "/discuss/delete",
-                        "/data/**"
+                        "/data/**",
+                        "/actuator/**"
                 )
                 .hasAnyAuthority(
                         AUTHORITY_ADMIN
